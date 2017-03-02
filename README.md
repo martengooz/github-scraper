@@ -2,7 +2,9 @@
 
 Create a file called `token` in the base directory
 
-First row is username.
+Create a new token at https://github.com/settings/tokens
+
+First row is github username.
 Second row is token.
 
 ex: 
