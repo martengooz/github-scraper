@@ -26,7 +26,7 @@ def writeJson(data, filename):
 def repList():
 	pageparam = {	'since':randint(1, 83570000), # Seems like this is near the upper limit of repo ids right now
 					'page':randint(1,5),
-					'per_page':10 } 
+					'per_page':100 } 
 
 	r = requests.get(baseurl + "repositories",params=pageparam, auth=(username, token))
 	res = json.loads(r.text)
