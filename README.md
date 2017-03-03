@@ -1,3 +1,5 @@
+requires https://pypi.python.org/pypi/pause/0.1.2
+
 #oAuth
 
 Create a file called `token` in the base directory
