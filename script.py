@@ -9,7 +9,7 @@ import datetime
 # Get token
 f = open("token","r") 
 username = f.readline()
-token = f.readline()
+token = f.readline().rstrip('\n')
 f.close()
 
 # Urls
@@ -17,6 +17,7 @@ baseurl = "https://api.github.com/"
 
 ## Write the json data to a file specified by `filename`
 def writeJson(data, filename):
+	print "\tSaving to file " + filename
 	f = open(filename,"a") 
 	f.write(json.dumps(data, indent=2))
 	f.close()
@@ -80,11 +81,11 @@ def filterRepos(repos):
 
 ## Main script
 totalRepos = 0
-for n in range(1,3):
+for n in range(1,10):
 	checkRateLimit()
 
 	repos, numRepos = filterRepos(repList())
 	totalRepos += numRepos
-	print "Found " + str(totalRepos) + " repositories"
+	print "Found " + str(totalRepos) + " repositories\n"
 
 	writeJson(repos, "repos")
