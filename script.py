@@ -48,7 +48,7 @@ def filterRepos(repos):
 	
 	for repo in noforks:
 		#Remove unnesseary keys from norepo
-		keys = ["id","full_name","url"]
+		keys = ["id","full_name","url", "commits_url"]
 		res = { key: repo[key] for key in keys }
 
 		# Get repo info
@@ -58,7 +58,7 @@ def filterRepos(repos):
 		#Remove repos smaller than 500 bytes
 		if repoinfo['size'] > 500:
 			#Remove unnesseary keys from repoinfo
-			keys = [ "size", "stargazers_count", "watchers_count", "language", "has_issues", "has_downloads", "has_pages", "forks_count", "mirror_url", "open_issues_count", "forks", "open_issues", "watchers", "network_count", "subscribers_count", "created_at", "updated_at", "pushed_at"]
+			keys = [ "size", "stargazers_count", "watchers_count", "language", "has_issues", "has_downloads", "has_pages", "forks_count", "open_issues_count", "forks", "open_issues", "watchers", "network_count", "subscribers_count", "created_at", "updated_at", "pushed_at"]
 			notempty = { key: repoinfo[key] for key in keys }
 
 			# Merge noforks info with repos not empty
