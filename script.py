@@ -4,6 +4,8 @@ from random import randint
 import pause
 import json
 import time
+import datetime
+
 # Get token
 f = open("token","r") 
 username = f.readline()
@@ -13,6 +15,7 @@ f.close()
 # Urls
 baseurl = "https://api.github.com/"
 
+## Write the json data to a file specified by `filename`
 def writeJson(data, filename):
 	f = open(filename,"a") 
 	f.write(json.dumps(data, indent=2))
@@ -23,7 +26,7 @@ def writeJson(data, filename):
 def repList():
 	pageparam = {	'since':randint(1, 83570000), # Seems like this is near the upper limit of repo ids right now
 					'page':randint(1,5),
-					'per_page':100 } 
+					'per_page':10 } 
 
 	r = requests.get(baseurl + "repositories",params=pageparam, auth=(username, token))
 	res = json.loads(r.text)
@@ -31,16 +34,18 @@ def repList():
 		repList()
 	
 	return res
+
 ## Halt program until rate limit reset
 def checkRateLimit():
 	ratelimit = json.loads(requests.get(baseurl + "rate_limit", auth=(username, token)).text)
 	requestsleft = ratelimit['rate']['remaining']
 	resettime = ratelimit['rate']['reset']
 	if (requestsleft < 100):
+		print "Pausing until " + datetime.datetime.fromtimestamp(resettime).strftime('%Y-%m-%d %H:%M:%S')
 		pause.until(resettime + 10)
 	print "Requests left: " + str(requestsleft)
 
-
+## Remove unwanted repos
 def filterRepos(repos):
 	# Remove forks
 	noforks = [repo for repo in repos if repo['fork'] == False]
@@ -69,11 +74,17 @@ def filterRepos(repos):
 
 	res = nonempty
 
-	print "Found " + str(len(res)) + " repositories"
-	return res
+	
+	return res, len(res)
 
-repos = filterRepos(repList())
-writeJson(repos, "repos")
 
-print 
-checkRateLimit()
+## Main script
+totalRepos = 0
+for n in range(1,3):
+	checkRateLimit()
+
+	repos, numRepos = filterRepos(repList())
+	totalRepos += numRepos
+	print "Found " + str(totalRepos) + " repositories"
+
+	writeJson(repos, "repos")
