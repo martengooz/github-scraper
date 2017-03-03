@@ -1,6 +1,16 @@
-requires https://pypi.python.org/pypi/pause/0.1.2
+## Installation
+###Requirements
+* Pyhton 2.7
+* module pause from https://pypi.python.org/pypi/pause/0.1.2 
+* module requests from http://docs.python-requests.org/en/master/
 
-#oAuth
+install by: 
+```
+pip install pause
+pip install requests
+```
+
+###oAuth
 
 Create a file called `token` in the base directory
 
