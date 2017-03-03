@@ -1,9 +1,15 @@
-Create login credentials in a file called "token".
+#oAuth
 
-First row is username
-Second row is token
+Create a file called `token` in the base directory
 
-ex. 
+Create a new token at https://github.com/settings/tokens
 
+First row is github username.
+Second row is token.
+
+ex: 
+
+```
 martengooz
 poam23n2o392391n239123m2931m22f3
+```
