@@ -5,6 +5,7 @@ import pause
 import json
 import time
 import datetime
+import re
 
 # Get token
 f = open("token","r") 
@@ -27,7 +28,7 @@ def writeJson(data, filename):
 def repList():
 	pageparam = {	'since':randint(1, 83570000), # Seems like this is near the upper limit of repo ids right now
 					'page':randint(1,5),
-					'per_page':100 } 
+					'per_page':10 } 
 
 	r = requests.get(baseurl + "repositories",params=pageparam, auth=(username, token))
 	res = json.loads(r.text)
@@ -61,6 +62,10 @@ def filterRepos(repos):
 		r = requests.get(res['url'], auth=(username, token))
 		repoinfo = json.loads(r.text)
 		
+		if repoinfo.has_key('message'):
+			print "Abort mission"
+			continue
+			
 		#Remove repos smaller than 500 bytes
 		if repoinfo['size'] > 500:
 			#Remove unnesseary keys from repoinfo
@@ -77,7 +82,41 @@ def filterRepos(repos):
 
 	
 	return res, len(res)
+	
+#def commitpage():
 
+
+def getcommits(repos):
+	combase = 'https://api.github.com/repositories/'
+	for repo in repos:
+		print "\tGathering " + repo['full_name'] + " commits"
+		r = requests.get(repo['url'] + "/commits", auth=(username, token))
+		commits = json.loads(r.text)
+		cleancommits = []
+		while(True):
+			headers = r.headers
+			commits = json.loads(r.text)
+			for commit in commits:
+				commitjson = json.loads(requests.get(commit['url'], auth=(username, token)).text)
+				cleancommit = { 'sha': commitjson['sha'], 'date': commitjson['commit']['committer']['date'], 'stats':commitjson['stats']}
+				cleancommits.append(cleancommit)
+			
+			if 'link' in headers:
+				link = headers['link']
+				m = re.search('rel="next"',link)
+				if m != None:
+					m = re.search("\d+\/commits\?page=\d+", link)
+					comurl = m.group(0)
+					r = requests.get(combase + comurl, params={'per_page': 100}, auth=(username, token))				
+				else:
+					break
+			else:
+				break
+		repo['commit'] = cleancommits
+		repo['num_commits'] = len(cleancommits)
+		print "\tdone"
+	return repos
+		
 
 ## Main script
 totalRepos = 0
@@ -88,4 +127,5 @@ for n in range(1,10):
 	totalRepos += numRepos
 	print "Found " + str(totalRepos) + " repositories\n"
 
+	repos = getcommits(repos)
 	writeJson(repos, "repos")
