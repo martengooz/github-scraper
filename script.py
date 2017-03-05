@@ -6,6 +6,8 @@ import json
 import time
 import datetime
 import re
+import grequests
+import sys
 
 # Get token
 f = open("token","r") 
@@ -15,6 +17,14 @@ f.close()
 
 # Urls
 baseurl = "https://api.github.com/"
+
+def printProgressBar (i):
+    sys.stdout.write("\r%d%%" % i)
+    sys.stdout.flush()
+
+def asyncRequest(urls, param):
+	rs = (grequests.get(u, params = param, auth=(username, token)) for u in urls)
+	return grequests.map(rs) 
 
 ## Write the json data to a file specified by `filename`
 def writeJson(data, filename):
@@ -28,7 +38,7 @@ def writeJson(data, filename):
 def repList():
 	pageparam = {	'since':randint(1, 83570000), # Seems like this is near the upper limit of repo ids right now
 					'page':randint(1,5),
-					'per_page':10 } 
+					'per_page':100 } 
 
 	r = requests.get(baseurl + "repositories",params=pageparam, auth=(username, token))
 	res = json.loads(r.text)
@@ -45,15 +55,19 @@ def checkRateLimit():
 	if (requestsleft < 100):
 		print "Pausing until " + datetime.datetime.fromtimestamp(resettime).strftime('%Y-%m-%d %H:%M:%S')
 		pause.until(resettime + 10)
-	print "Requests left: " + str(requestsleft)
+	return str(requestsleft)
 
 ## Remove unwanted repos
 def filterRepos(repos):
+	print "Filtering repos"
 	# Remove forks
 	noforks = [repo for repo in repos if repo['fork'] == False]
 	nonempty = []
-	
+	i = 1
+	numnoforks = len(noforks)
 	for repo in noforks:
+		i+= 1
+		printProgressBar((i*100/numnoforks))
 		#Remove unnesseary keys from norepo
 		keys = ["id","full_name","url", "commits_url"]
 		res = { key: repo[key] for key in keys }
@@ -79,53 +93,58 @@ def filterRepos(repos):
 			nonempty.append(temp)
 
 	res = nonempty
-
-	
 	return res, len(res)
-	
-#def commitpage():
 
 
 def getcommits(repos):
 	combase = 'https://api.github.com/repositories/'
-	for repo in repos:
-		print "\tGathering " + repo['full_name'] + " commits"
-		r = requests.get(repo['url'] + "/commits", auth=(username, token))
+	totalcommits = 0
+	print "\tGathering " + repo['full_name'] + " commits"
+	r = requests.get(repo['url'] + "/commits", auth=(username, token))
+	commits = json.loads(r.text)
+	cleancommits = []
+	while(True):
+		checkRateLimit()
+		headers = r.headers
 		commits = json.loads(r.text)
-		cleancommits = []
-		while(True):
-			headers = r.headers
-			commits = json.loads(r.text)
-			for commit in commits:
-				commitjson = json.loads(requests.get(commit['url'], auth=(username, token)).text)
-				cleancommit = { 'sha': commitjson['sha'], 'date': commitjson['commit']['committer']['date'], 'stats':commitjson['stats']}
-				cleancommits.append(cleancommit)
-			
-			if 'link' in headers:
-				link = headers['link']
-				m = re.search('rel="next"',link)
-				if m != None:
-					m = re.search("\d+\/commits\?page=\d+", link)
-					comurl = m.group(0)
-					r = requests.get(combase + comurl, params={'per_page': 100}, auth=(username, token))				
-				else:
-					break
+
+		urls = [commit['url'] for commit in commits]
+		rs = asyncRequest(urls, [])
+
+		for resp in rs:
+			totalcommits += 1
+			commitjson = json.loads(resp.text)
+			cleancommit = { 'sha': commitjson['sha'], 'date': commitjson['commit']['committer']['date'], 'stats':commitjson['stats']}
+			cleancommits.append(cleancommit)
+			printProgressBar(totalcommits)
+		
+		if 'link' in headers:
+			link = headers['link']
+			m = re.search('rel="next"',link)
+			if m != None:
+				m = re.search("\d+\/commits\?page=\d+", link)
+				comurl = m.group(0)
+				r = requests.get(combase + comurl, params={'per_page': 100}, auth=(username, token))				
 			else:
 				break
-		repo['commit'] = cleancommits
-		repo['num_commits'] = len(cleancommits)
-		print "\tdone"
-	return repos
-		
-
+		else:
+			break
+	repo['commit'] = cleancommits
+	repo['num_commits'] = len(cleancommits)
+	print "\tdone"
+	return repo
 ## Main script
 totalRepos = 0
-for n in range(1,10):
-	checkRateLimit()
+for n in range(1,100):
+	print checkRateLimit()
 
 	repos, numRepos = filterRepos(repList())
 	totalRepos += numRepos
 	print "Found " + str(totalRepos) + " repositories\n"
 
-	repos = getcommits(repos)
-	writeJson(repos, "repos")
+	for repo in repos: 
+		commits = getcommits(repo)
+		writeJson(commits, "repos")
+		f = open("repos","a") 
+		f.write(",\n")
+		f.close()
