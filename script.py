@@ -19,7 +19,7 @@ f.close()
 baseurl = "https://api.github.com/"
 
 def printProgressBar (i):
-    sys.stdout.write("\r%d%%" % i)
+    sys.stdout.write("\r%d%% " % i)
     sys.stdout.flush()
 
 def asyncRequest(urls, param):
@@ -63,7 +63,7 @@ def filterRepos(repos):
 	# Remove forks
 	noforks = [repo for repo in repos if repo['fork'] == False]
 	nonempty = []
-	i = 1
+	i = 0
 	numnoforks = len(noforks)
 	for repo in noforks:
 		i+= 1
@@ -135,8 +135,8 @@ def getcommits(repos):
 	return repo
 ## Main script
 totalRepos = 0
-for n in range(1,100):
-	print checkRateLimit()
+while(True):
+	print "\n\nRequests left: " + str(checkRateLimit())
 
 	repos, numRepos = filterRepos(repList())
 	totalRepos += numRepos
