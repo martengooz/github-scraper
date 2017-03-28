@@ -42,6 +42,10 @@ def repList():
 
 	r = requests.get(baseurl + "repositories",params=pageparam, auth=(username, token))
 	res = json.loads(r.text)
+	if type(res) is not list:
+		if res.has_key('message'):
+			print "Abort mission"
+			repList()
 	if res == []: # if we recieved an empty page
 		repList()
 	
