@@ -22,9 +22,9 @@ f.close()
 with open('reposfinal') as data_file:
 	data = json.load(data_file)
 
-def printProgressBar (i):
-	sys.stdout.write("\r%d%% " % i)
-	sys.stdout.flush()
+def printProgressBar (i,j):
+	sys.stdout.write("\r[%d/%d]%% " % i,j)
+	sys.stdout.flush()nan
 
 def writeJson(data, filename):
 	print "\tSaving to file " + filename
@@ -36,7 +36,7 @@ def checkRateLimit():
 	ratelimit = json.loads(requests.get(baseurl + "rate_limit", auth=(username, token)).text)
 	requestsleft = ratelimit['rate']['remaining']
 	resettime = ratelimit['rate']['reset']
-	if (requestsleft < 10):
+	if (requestsleft < 20):
 		print "Pausing until " + datetime.datetime.fromtimestamp(resettime).strftime('%Y-%m-%d %H:%M:%S')
 		pause.until(resettime + 10)
 	return str(requestsleft)
@@ -66,14 +66,14 @@ f.close()
 try:
 	z = 1
 	for repo in data:
-		printProgressBar(z/len(data))
+		printProgressBar(z,len(data))
 		z += 1
 		if repo['full_name'] in donerepos:
 			continue
 		if (len(repo['commit']) == 30):
 			n = 1
 			lista = []
-
+			print checkRateLimit()
 			while getPage(repo['url'] + "/commits", n) != "[]":
 				jason = json.loads(page)
 				for commit in jason:
@@ -94,7 +94,7 @@ try:
 			f.write(",\n")
 			f.close()
 
-except KeyboardInterrupt:
+except:
 	f = open("saved","a+") 
 	f.seek(-2, os.SEEK_END)
 	f.truncate()

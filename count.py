@@ -1,6 +1,6 @@
 import json
 
-with open('repos') as data_file:    
+with open('reposfinal') as data_file:    
     data = json.load(data_file)
 
 i = 0
