@@ -3,28 +3,25 @@ import json
 
 
 
-with open('saved') as data_file:    
+with open('reposextra') as data_file:    
     data = json.load(data_file)
 
 max = 0
 for repo in data: 
-	if len(repo['commit']) > max:
-		max = len(repo['commit'])
+	if repo['stargazers_count']> max:
+		max = repo['stargazers_count']
 
 
-numberBars = len(data)
+numberBars = 0
 y = [0] * numberBars
 
 sizes = []
 for repo in data: 
-	if len(repo['commit']) == 30:
-		print repo['full_name']
-	sizes.append(len(repo['commit']))
+	if repo['stargazers_count'] > -1: #and len(repo['commit']) > 100:	
+		numberBars += 1
+		sizes.append(len(repo['commit']))
 
-#sizes.sort()
-
-
-
+sizes.sort()
 
 plt.scatter(range(numberBars), sizes)
 plt.show()
